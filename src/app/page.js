@@ -9,3 +9,8 @@ export default function Home() {
 
   return null;
 }
+
+//store =>globalized state
+//action =>encrement
+//reducer =>reducer
+//dispatch =>store

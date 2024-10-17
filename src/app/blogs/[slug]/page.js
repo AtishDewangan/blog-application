@@ -1,20 +1,20 @@
 "use client";
 import Api from "@/api";
 import { useEffect, useRef, useState } from "react";
-// import Button from "@/components/form/button";
-// import Input from "@/components/form/input";
+import { useAppDispatch, useAppSelector } from "@/lib/store/hooks";
+import { add } from "@/lib/store/features/comment/comment-slice";
 import dynamic from "next/dynamic";
-
 // Dynamically import the Input and Button components
 const Input = dynamic(() => import("@/components/form/input"), {
-  loading: () => <p>Loading Input...</p>,
+  loading: () => <p className="text-gray-700">Loading...</p>,
 });
 
 const Button = dynamic(() => import("@/components/form/button"), {
-  loading: () => <p>Loading Button...</p>,
+  loading: () => <p className="text-gray-700">Loading...</p>,
 });
 export default function BlogDetail({ params: { slug } }) {
-  const [showComponents, setShowComponents] = useState(false);
+  const dispatch = useAppDispatch();
+  const comments = useAppSelector((state) => state.comment.items);
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -34,10 +34,13 @@ export default function BlogDetail({ params: { slug } }) {
   };
 
   // Close the modal after submission
+  const filteredComments =
+    comments?.length > 0 && comments.filter((item) => item.id === blog?.id);
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Input Value:", inputValue);
     setIsOpen(false);
+    dispatch(add({ id: blog?.id, comment: inputValue }));
+    setInputValue("");
   };
 
   useEffect(() => {
@@ -56,7 +59,7 @@ export default function BlogDetail({ params: { slug } }) {
       }
     };
     fetchPost();
-  }, [slug]);
+  });
 
   // Close modal on outside click
   const handleClickOutside = (event) => {
@@ -87,7 +90,11 @@ export default function BlogDetail({ params: { slug } }) {
   }
 
   if (!blog) {
-    return <div>Post not found.</div>;
+    return (
+      <div className="text-gray-700 flex justify-center items-center w-full h-screen">
+        Post not found.
+      </div>
+    );
   }
 
   return (
@@ -105,7 +112,11 @@ export default function BlogDetail({ params: { slug } }) {
           Add Comment
         </button>
       </div>
-      <p>Comments will be displayed here.</p>
+
+      {filteredComments?.length > 0 &&
+        filteredComments.map((item, index) => (
+          <p key={index}>{item.comment}</p>
+        ))}
       {/* Modal */}
       {isOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -114,32 +125,28 @@ export default function BlogDetail({ params: { slug } }) {
             className="bg-white p-6 rounded-lg shadow-lg w-96"
           >
             <h2 className="text-xl text-black mb-4">Leave a Comment</h2>
-            {showComponents && (
-              <form onSubmit={handleSubmit}>
-                <Input
-                  label="Your comment"
-                  placeholder="Enter your comment"
-                  value={inputValue}
-                  onChange={handleInputChange}
-                />
+            <form onSubmit={handleSubmit}>
+              <Input
+                label="Your comment"
+                placeholder="Enter your comment"
+                value={inputValue}
+                onChange={handleInputChange}
+              />
 
-                <div className="flex justify-end space-x-2">
-                  {/* Close the modal */}
-                  <Button
-                    className={"bg-gray-300 hover:bg-purple-500"}
-                    label="Cancel"
-                    onClick={toggleModal}
-                  />
-                  {/* Submit the input */}
-                  <Button
-                    className={"bg-purple-500 hover:bg-gray-300"}
-                    label="Submit"
-                    onClick={handleSubmit}
-                    type="submit"
-                  />
-                </div>
-              </form>
-            )}
+              <div className="flex justify-end space-x-2">
+                <Button
+                  className={"bg-gray-300 hover:bg-purple-500"}
+                  label="Cancel"
+                  onClick={toggleModal}
+                />
+                <Button
+                  className={"bg-purple-500 hover:bg-gray-300"}
+                  label="Submit"
+                  onClick={handleSubmit}
+                  type="submit"
+                />
+              </div>
+            </form>
           </div>
         </div>
       )}
